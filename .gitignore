@@ -1,0 +1,10 @@
+*.pyc
+*.pyo
+.idea
+*.log
+*.log.backup
+.idea
+*.spec
+dist
+build
+config.xml
