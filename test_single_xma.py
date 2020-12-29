@@ -12,6 +12,12 @@ class XMAType(IntEnum):
     EMA = 1
 
 
+XMATypeDict = {
+    XMAType.XMA_INVALID: 'xma',
+    XMAType.MA: 'ma',
+    XMAType.EMA: 'ema',
+}
+
 class Operate:
     def __init__(self, price, direction, time):
         self._price = price
@@ -20,10 +26,11 @@ class Operate:
 
 
 class TestSingleXMA:
-    def __init__(self, xma_type, xma_value, data=Organized()):
+    def __init__(self, xma_type, xma_value, data=Organized(), verbose=False):
         self._xma_type = xma_type
         self._period = xma_value
         self._kline_data = data
+        self._verbose = verbose
 
     def run(self):
         profit_sum = 0
@@ -63,10 +70,10 @@ class TestSingleXMA:
                         else:
                             profit = opt_cur._price - opt_his._price
 
-                        opt_cnt += 1
-                        opt_item = [opt_his, opt_cur, profit]
-                        opt_list.append(opt_item)
                         profit_sum += profit
+                        opt_cnt += 1
+                        opt_item = [opt_his, opt_cur, profit, profit_sum]
+                        opt_list.append(opt_item)
                         if profit > 0:
                             positive_cnt += 1
                         else:
@@ -79,14 +86,14 @@ class TestSingleXMA:
                     else:
                         opt_his = Operate(close, False, time)
 
+        if self._verbose:
+            print("profit:{0} positive:{1} negative:{2}".format(profit_sum, positive_cnt, negative_cnt))
+            for i in range(0, len(opt_list)):
+                his, cur, prft, prft_sum = opt_list[i][0], opt_list[i][1], opt_list[i][2], opt_list[i][3]
+                print("open:{0},{1} close:{2},{3} dir={4} profit={5} profit_sum={6} ".format(his._time, his._price,
+                                                                             cur._time, cur._price, his._direction,
+                                                                             prft, prft_sum))
         return profit_sum, positive_cnt, negative_cnt
-
-        print("profit:{0} positive:{1} negative:{2}".format(profit_sum, positive_cnt, negative_cnt))
-        for i in range(0, len(opt_list)):
-            his, cur, profit = opt_list[i][0], opt_list[i][1], opt_list[i][2]
-            print("open:{0},{1} close:{2},{3} profit={4} dir={5}".format(his._time, his._price,
-                                                                         cur._time, cur._price,
-                                                                         profit, his._direction))
 
 
 def TestSingleXMALoop(data=Organized()):

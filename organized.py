@@ -11,8 +11,8 @@ class Organized:
         self._high_list = []
         self._low_list = []
         self._hist_list = []  # MACD
-        self._ma_list = [[0 * 10000]] * 500
-        self._ema_list = [[0 * 10000]] * 500
+        self._ma_list = [[0 * 60000]] * 500
+        self._ema_list = [[0 * 60000]] * 500
 
     def get_len(self):
         return len(self._id_list)

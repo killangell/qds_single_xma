@@ -6,7 +6,7 @@ from pprint import pformat
 from config_helper import ConfigHelper
 from huobi.HuobiDMService import HuobiDM
 from organized import Organized
-from test_single_xma import TestSingleXMALoop, TestSingleXMA, XMAType
+from test_single_xma import TestSingleXMALoop, TestSingleXMA, XMAType, XMATypeDict
 from upath import UPath
 from huobi.helpers.huobi_return_helper import HuobiReturnHelper as ru
 from huobi.helpers.contract_position_info_helper import ContractPositionInfoHelper as cpi_helper
@@ -44,13 +44,13 @@ PeriodDict = {
 
 
 class Qds_Single_XMA_Tester:
-    def __init__(self, xma_type, xma_value):
+    def __init__(self, symbol_type, period, xma_type, xma_value):
         self._config = None
         self._dm = None
-        self._symbol_type = 'BTC'
-        self._symbol_period = 'BTC_CQ'  # BTC_NQ
+        self._symbol_type = symbol_type  # 'LTC'
+        self._symbol_period = "{0}_CQ".format(self._symbol_type)   # BTC_CQ/BTC_NQ
         self._contract_type_period = 'quarter'  # next_quarter
-        self._period = Period.HOURS_4
+        self._period = period  # Period.DAYS_1
         self._period_str = PeriodDict.get(self._period)
         self._xma_type = xma_type
         self._xma_value = xma_value
@@ -58,7 +58,7 @@ class Qds_Single_XMA_Tester:
         self._trend_history = None
         self._level_rate = 20
         self._log_file = "{0}_{1}_{2}_{3}_test_result.log".format(self._symbol_type, self._period_str,
-                                                                  self._xma_type, self._xma_value)
+                                                                  XMATypeDict.get(self._xma_type), self._xma_value)
 
     def init(self):
         self.init_log()
@@ -69,6 +69,13 @@ class Qds_Single_XMA_Tester:
 
     def init_log(self):
         log_file = self._log_file
+        log_backup_file = "{0}.backup".format(log_file)
+        # backup a log copy, in case any error would be overwritten in a new run
+        if UPath.is_file_exists(log_backup_file):
+            UPath.remove(log_backup_file)
+
+        if UPath.is_file_exists(log_file):
+            UPath.rename(log_file, log_backup_file)
 
         logging.basicConfig(level=logging.INFO,  # 控制台打印的日志级别
                             filename=log_file,
@@ -152,7 +159,8 @@ class Qds_Single_XMA_Tester:
             ret = "23:00:00"
         elif period == Period.MINUTES_30:
             ret = "23:30:00"
-        else:
+        elif period == Period.DAYS_1:
+            ret = "00:00:00"
             pass
 
         return ret
@@ -262,10 +270,17 @@ class Qds_Single_XMA_Tester:
         if self._xma_type == XMAType.XMA_INVALID:
             TestSingleXMALoop(global_data)
         else:
-            test_obj = TestSingleXMA(self._xma_type, self._xma_value, global_data)
+            if self._xma_type == XMAType.EMA:
+                global_data.calculate_ema(self._xma_value)
+            elif self._xma_type == XMAType.MA:
+                global_data.calculate_ma(self._xma_value)
+            test_obj = TestSingleXMA(self._xma_type, self._xma_value, global_data, True)
             test_obj.run()
 
 
 if __name__ == "__main__":
-    qds = Qds_Single_XMA_Tester(XMAType.XMA_INVALID, 0)
+    # Loop all
+    # qds = Qds_Single_XMA_Tester('BTC', Period.HOURS_4, XMAType.XMA_INVALID, 0)
+    # test single
+    qds = Qds_Single_XMA_Tester('BTC', Period.HOURS_4, XMAType.EMA, 7)
     qds.start()
