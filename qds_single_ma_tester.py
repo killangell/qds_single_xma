@@ -44,7 +44,7 @@ PeriodDict = {
 
 
 class Qds_Single_XMA_Tester:
-    def __init__(self, symbol_type, period, xma_type, xma_value):
+    def __init__(self, symbol_type, period, xma_type, xma_value, fromY, fromM, fromD, toY, toM, toD):
         self._config = None
         self._dm = None
         self._symbol_type = symbol_type  # 'LTC'
@@ -57,8 +57,16 @@ class Qds_Single_XMA_Tester:
         self._max_number = 1
         self._trend_history = None
         self._level_rate = 20
-        self._log_file = "{0}_{1}_{2}_{3}_test_result.log".format(self._symbol_type, self._period_str,
-                                                                  XMATypeDict.get(self._xma_type), self._xma_value)
+        self._fromY = fromY
+        self._fromM = fromM
+        self._fromD = fromD
+        self._toY = toY
+        self._toM = toM
+        self._toD = toD
+
+        self._log_file = "{0}_{1}_{2}_{3}_{4}-{5}-{6}_{7}-{8}-{9}_test_result.log".format(
+            self._symbol_type, self._period_str, XMATypeDict.get(self._xma_type), (self._xma_value if self._xma_type != XMAType.XMA_INVALID else "_"),
+            self._fromY, self._fromM, self._fromD, self._toY, self._toM, self._toD)
 
     def init(self):
         self.init_log()
@@ -217,12 +225,12 @@ class Qds_Single_XMA_Tester:
         # 4hour： 2000/6=333 6个月
         # 60min： 2000/24=83 2个月
         # 30min： 2000/48=41 1个月
-        fromY = 2018
-        fromM = 11
-        fromD = 10
-        toY = 2020
-        toM = 12
-        toD = 20
+        fromY = self._fromY
+        fromM = self._fromM
+        fromD = self._fromD
+        toY = self._toY
+        toM = self._toM
+        toD = self._toD
 
         org_data = Organized()
         if fromY != toY:
@@ -265,7 +273,14 @@ class Qds_Single_XMA_Tester:
             global_data = self.parse_kline_data(ret['data'])
 
         global_data = Organized()
-        global_data = self.get_all_kline(self._period)
+        if self._period == Period.WEEKS_1:
+            ret = self._dm.get_contract_kline(symbol=self._symbol_period, period=self._period_str, size=2000)
+            while not ru.is_ok(ret):
+                logging.error("get_contract_kline failed, ret={0}".format(pformat(ret)))
+                ret = self._dm.get_contract_kline(symbol=self._symbol_period, period=self._period_str, size=2000)
+            global_data = self.parse_kline_data(ret['data'])
+        else:
+            global_data = self.get_all_kline(self._period)
 
         if self._xma_type == XMAType.XMA_INVALID:
             TestSingleXMALoop(global_data)
@@ -282,5 +297,6 @@ if __name__ == "__main__":
     # Loop all
     # qds = Qds_Single_XMA_Tester('BTC', Period.HOURS_4, XMAType.XMA_INVALID, 0)
     # test single
-    qds = Qds_Single_XMA_Tester('BTC', Period.HOURS_4, XMAType.EMA, 7)
+    # qds = Qds_Single_XMA_Tester('BTC', Period.DAYS_1, XMAType.XMA_INVALID, 7, 2018, 11, 10, 2020, 12, 30)
+    qds = Qds_Single_XMA_Tester('BTC', Period.HOURS_4, XMAType.EMA, 10, 2021, 1, 5, 2021, 1, 9)
     qds.start()

@@ -19,7 +19,7 @@ class Qds_Single_XMA:
         self._contract_type_period = 'quarter' # next_quarter
         self._period = "4hour"
         self._xma_type = 'EMA'
-        self._xma_value = 7
+        self._xma_value = 10
         self._max_number = 1
         self._trend_history = None
         self._level_rate = 20
@@ -215,8 +215,8 @@ class Qds_Single_XMA:
             holding_buy_count, holding_buy_price, holding_sell_count, holding_sell_price = \
                 self.get_holding_orders_overview()
             logging.info(
-                "get_holding_orders_overview: buy{0}:{1}, sell{2}:{3}".format(
-                    holding_buy_count, holding_buy_price, holding_sell_count, holding_sell_price))
+                "get_holding_orders_overview: buy count={0} price={1}, sell count={2} price={3}".format(
+                            holding_buy_count, holding_buy_price, holding_sell_count, holding_sell_price))
             if trend == 'long':
                 limit_holding_against_trend_count = holding_sell_count
                 limit_holding_against_trend_close_direction = 'buy'
